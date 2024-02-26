@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}{% endblock %}</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='site.css') }}"/>
+    </head>
+
+    <body>
+
+<div class="navbar">
+    <a href = "{{ url_for('main.home') }}" class ="navbar-brand">Home</a>
+    <a href = "{{ url_for('main.about') }}" class ="navbar-item">About</a>
+    <a href = "{{ url_for('main.contact') }}" class ="navbar-item">Contact</a>
+    <a href = "{{ url_for('main.svm') }}" class ="navbar-item">SVM</a>
+    <a href = "{{ url_for('main.ann') }}" class ="navbar-item">ANN</a>
+</div>   
+
+<div class = "body-content">
+    {% block content %}
+    {% endblock %}
+    <hr/>
+    <footer>
+    <p> &copy; 2021</p>
+    </footer>
+</div>
+</body>
+</html>
