@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 from tensorflow import keras
 from keras import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 
 #Loading the Data 
@@ -27,6 +27,10 @@ X_test = sc.transform(X_test)
 # Initialising the ANN
 model = Sequential([
     Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+    BatchNormalization(),
+    Dropout(0.2),
+    Dense(128, activation='relu'),
+    Dropout(0.2),
     Dense(64, activation='relu'),
     Dense(1, activation='linear')
 ])
