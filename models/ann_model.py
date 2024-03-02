@@ -8,13 +8,13 @@ from keras.layers import Dense
 import matplotlib.pyplot as plt
 
 #Loading the Data 
-df = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
+train_data = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
 
-print(df.head())
+print(train_data.head())
 
 features = ['Year', 'coalprice', 'oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
-X = df[features]  # Your input features
-y = df['avgprice']  # Your target variable
+X = train_data[features]  # Your input features
+y = train_data['avgprice']  # Your target variable
 
 # Splitting the dataset into the Training set and Test set
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
