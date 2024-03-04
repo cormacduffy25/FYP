@@ -6,42 +6,65 @@ from tensorflow import keras
 from keras import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
+import numpy as np
 
-#Loading the Data 
-train_data = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
+def train_ann_model():
+    """
+    Trains an Artificial Neural Network (ANN) model using the given dataset.
+    """
 
-print(train_data.head())
+    # Loading the Data
+    train_data = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
 
-features = ['Year', 'coalprice', 'oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
-X = train_data[features]  # Your input features
-y = train_data['avgprice']  # Your target variable
+    print(train_data.head())
 
-# Splitting the dataset into the Training set and Test set
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
+    features = ['Year', 'coalprice','oilprice', 'gasprice', 'nuclearprice']# 'hydroprice', 'windsolarprice', 'cokebreezeprice']
+    X = train_data[features]  # Your input features
+    y = train_data['avgprice']  # Your target variable
 
-# Feature Scaling
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
+    # Splitting the dataset into the Training set and Test set
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
 
-# Initialising the ANN
-model = Sequential([
-    Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
-    BatchNormalization(),
-    Dropout(0.2),
-    Dense(128, activation='relu'),
-    Dropout(0.2),
-    Dense(64, activation='relu'),
-    Dense(1, activation='linear')
-])
+    # Feature Scaling
+    sc = StandardScaler()
+    X_train = sc.fit_transform(X_train)
+    X_test = sc.transform(X_test)
 
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+    # Initialising the ANN
+    model = Sequential([
+        Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+        BatchNormalization(),
+        Dropout(0.2),
+        Dense(128, activation='relu'),
+        Dropout(0.2),
+        Dense(64, activation='relu'),
+        Dense(1, activation='linear')
+    ])
+    # Compiling the ANN
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+    # Fitting the ANN to the Training set
+    model.fit(X_train, y_train, validation_split=0.2, epochs=500, batch_size=128)
+    # Evaluating the ANN
+    model.evaluate(X_test, y_test)
+    # Predicting the Test set results
+    predictions = model.predict(X_test)
+    # Flatten the predictions and actual values to 1D array
+    predictions = predictions.flatten()
+    actual_values = y_test.to_numpy()
+    # Print the test loss and test MAE
+    test_loss, test_mae = model.evaluate(X_test, y_test)
+    print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
-model.fit(X_train, y_train, validation_split=0.2, epochs=500, batch_size=32)
+    # Print the first 10 predictions and actual values
+    print("Prediction vs Actual")
+    for i in range(len(predictions)):
+        print(f"Prediction: {predictions[i]:.4f}, Actual: {actual_values[i]:.4f}")
 
-model.evaluate(X_test, y_test)
+    # Plot the predictions vs actual values
+    plt.figure(figsize=(12, 6))
+    plt.plot(predictions, label='Predictions')
+    plt.plot(actual_values, label='Actual')
+    plt.legend()
+    plt.show()
 
-predictions = model.predict(X_test)
-
-test_loss, test_mae = model.evaluate(X_test, y_test)
-print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
+train_ann_model()

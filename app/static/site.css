@@ -3,16 +3,23 @@
     color:blue;
 }
 .navbar {
-    background-color: lightslategray;
-    font-size: 1em;
+    background-color: slategray;
+    font-size: 1.5em;
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     color: white;
-    padding: 8px, 5px, 8px, 5px;
+    padding: 20px 10px;
     
 }
 .navbar a {
     text-decoration: none;
     color: inherit;
+    padding: 20px 10px;
+    text-transform: uppercase;
+    
+}
+
+.navbar a:hover {
+    color: #000000;
 }
 
 .navbar-brand {
@@ -22,7 +29,8 @@
 
 .nav-item{
     font-variant: small-caps;
-    margin-left: 30px;
+    margin-left: 60px;
+    margin-right: 60px;
 }
 
 .body-content{
