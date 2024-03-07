@@ -15,10 +15,10 @@ def train_ann_model():
 
     # Loading the Data
     train_data = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
-
+    
     print(train_data.head())
 
-    features = ['Year', 'coalprice','oilprice', 'gasprice', 'nuclearprice']# 'hydroprice', 'windsolarprice', 'cokebreezeprice']
+    features = ['Year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
     X = train_data[features]  # Your input features
     y = train_data['avgprice']  # Your target variable
 
@@ -30,7 +30,7 @@ def train_ann_model():
     X_train = sc.fit_transform(X_train)
     X_test = sc.transform(X_test)
 
-    # Initialising the ANN
+    # Initialising the ANN 
     model = Sequential([
         Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
         BatchNormalization(),
@@ -62,9 +62,9 @@ def train_ann_model():
 
     # Plot the predictions vs actual values
     plt.figure(figsize=(12, 6))
-    plt.plot(predictions, label='Predictions')
-    plt.plot(actual_values, label='Actual')
+    plt.plot(predictions, label='Predictions', color='red', linestyle='--', marker='x')
+    plt.plot(actual_values, label='Actual', color='blue', linestyle='--', marker='o')
+    plt.title('Predictions vs Actual Values ANN Model')
     plt.legend()
     plt.show()
-
 train_ann_model()

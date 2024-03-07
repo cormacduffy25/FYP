@@ -52,11 +52,9 @@ def train_svm_model():
     plt.plot(sorted_actual, label='Actual Values', color='blue', marker='o')
     plt.plot(sorted_predictions, label='Predicted Values', color='red', linestyle='--', marker='x')
 
-    plt.title('Actual vs Predicted Values')
+    plt.title('Actual vs Predicted Values SVM Model')
     plt.xlabel('Index')
     plt.ylabel('Values')
     plt.legend()
     plt.show()
-
-        
 train_svm_model()
