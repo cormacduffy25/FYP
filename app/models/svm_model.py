@@ -5,7 +5,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error 
 import numpy as np
 import matplotlib.pyplot as plt
-from database.database import load_data_from_db
+from database import load_data_from_db
 def train_svm_model():
 
      # Loading the Data
