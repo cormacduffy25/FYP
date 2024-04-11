@@ -7,7 +7,20 @@ from keras import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 import numpy as np
-from database.database import load_data_from_db
+from sqlalchemy import create_engine
+import json
+
+def get_db_url():
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+    return config['db_url']
+
+db_url = get_db_url()
+engine = create_engine(db_url)
+
+def load_data_from_db():
+   sql_query = 'SELECT * FROM fuelsources'
+   return pd.read_sql_query(sql_query, engine)
 
 def train_ann_model():
     """
@@ -16,8 +29,10 @@ def train_ann_model():
 
     # Loading the Data
     train_data = load_data_from_db()
+
+    print(train_data.head())
     
-    features = ['Year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
+    features = ['year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
     X = train_data[features]  # Your input features
     y = train_data['avgprice']  # Your target variable
 

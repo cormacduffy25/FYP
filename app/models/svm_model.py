@@ -5,7 +5,21 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error 
 import numpy as np
 import matplotlib.pyplot as plt
-from database import load_data_from_db
+from sqlalchemy import create_engine
+import json
+
+def get_db_url():
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+    return config['db_url']
+
+db_url = get_db_url()
+engine = create_engine(db_url)
+
+def load_data_from_db():
+   sql_query = 'SELECT * FROM fuelsources'
+   return pd.read_sql_query(sql_query, engine)
+
 def train_svm_model():
 
      # Loading the Data
@@ -13,7 +27,7 @@ def train_svm_model():
 
     print(train_data.head())
 
-    features = ['Year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
+    features = ['year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
     X = train_data[features]  # Your input features
     y = train_data['avgprice']  # Your target variable
 
