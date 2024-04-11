@@ -7,6 +7,7 @@ from keras import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 import numpy as np
+from database.database import load_data_from_db
 
 def train_ann_model():
     """
@@ -14,10 +15,8 @@ def train_ann_model():
     """
 
     # Loading the Data
-    train_data = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
+    train_data = load_data_from_db()
     
-    print(train_data.head())
-
     features = ['Year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
     X = train_data[features]  # Your input features
     y = train_data['avgprice']  # Your target variable

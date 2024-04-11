@@ -5,10 +5,11 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error 
 import numpy as np
 import matplotlib.pyplot as plt
+from database.database import load_data_from_db
 def train_svm_model():
 
      # Loading the Data
-    train_data = pd.read_csv('estimated_average_selling_prices_fuel_sources (1).csv')
+    train_data = load_data_from_db()
 
     print(train_data.head())
 
@@ -31,30 +32,38 @@ def train_svm_model():
     model.fit(X_train, y_train)
 
     # Predicting the Test set results
-    predictions = model.predict(X_test)
+    predictions_test = model.predict(X_test)
+    predictions_train = model.predict(X_train)
 
     # Print the test loss and test MAE
-    mae = mean_absolute_error(y_test, predictions)
-    print(f"Test MAE: {mae}")
+    test_mae = mean_absolute_error(y_test, predictions_test)
+    train_mae = mean_absolute_error(y_train, predictions_train)
+    print(f"Test MAE: {test_mae}")
+    print(f"Train MAE: {train_mae}")
 
     print("Prediction vs Actual")
-    for actual, predicted in zip(np.array(y_test), predictions):
+    for actual, predicted in zip(np.array(y_test), predictions_test):
         print(f"Actual: {actual}, Predicted: {predicted}")
-    
-      # Plotting
+  
+# Plotting
     plt.figure(figsize=(12, 6))
-
-    # Sort the actual and predicted values for plotting
+# Sort the actual and predicted values for plotting
     indices = np.argsort(y_test)
     sorted_actual = y_test.iloc[indices].values
-    sorted_predictions = predictions[indices]
-
+    sorted_predictions = predictions_test[indices]
+# Plotting the Actual vs Predicted Values
     plt.plot(sorted_actual, label='Actual Values', color='blue', marker='o')
     plt.plot(sorted_predictions, label='Predicted Values', color='red', linestyle='--', marker='x')
-
     plt.title('Actual vs Predicted Values SVM Model')
     plt.xlabel('Index')
     plt.ylabel('Values')
     plt.legend()
+    plt.show()
+# Plotting the Training vs Testing Loss
+    plt.figure(figsize=(10, 6))
+    plt.plot(['Training'], [train_mae], marker='o', linestyle='-', color='red')
+    plt.plot(['Testing'], [test_mae], marker='o', linestyle='-', color='red')
+    plt.title('Training vs Testing Loss (MAE)')
+    plt.ylabel('Mean Absolute Error (MAE)')
     plt.show()
 train_svm_model()
