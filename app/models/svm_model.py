@@ -20,6 +20,13 @@ def load_data_from_db():
    sql_query = 'SELECT * FROM fuelsources'
    return pd.read_sql_query(sql_query, engine)
 
+def save_predictions_to_db(actuals, predictions, years):
+    df = pd.DataFrame({
+        'actual': actuals, 
+        'prediction': predictions, 
+        'year': years})    
+    df.to_sql('svm_prediction', con=engine, if_exists='replace', index=False)
+
 def train_svm_model():
 
      # Loading the Data
@@ -33,6 +40,9 @@ def train_svm_model():
 
     # Splitting the dataset into the Training set and Test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
+
+
+    years_test = X_test['year'].values
 
     # Feature Scaling
     sc = StandardScaler()
@@ -59,6 +69,8 @@ def train_svm_model():
     for actual, predicted in zip(np.array(y_test), predictions_test):
         print(f"Actual: {actual}, Predicted: {predicted}")
   
+    save_predictions_to_db(y_test, predictions_test, years_test)
+
 # Plotting
     plt.figure(figsize=(12, 6))
 # Sort the actual and predicted values for plotting

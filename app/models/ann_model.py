@@ -7,7 +7,7 @@ from keras import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 import numpy as np
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, insert, MetaData, Table
 import json
 
 def get_db_url():
@@ -17,10 +17,18 @@ def get_db_url():
 
 db_url = get_db_url()
 engine = create_engine(db_url)
+predictions_ann = Table('predictions_ann', MetaData(), autoload_with=engine)
 
 def load_data_from_db():
    sql_query = 'SELECT * FROM fuelsources'
    return pd.read_sql_query(sql_query, engine)
+
+def save_predictions_to_db(actuals, predictions, years):
+    df = pd.DataFrame({
+        'actual': actuals, 
+        'prediction': predictions, 
+        'year': years})    
+    df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
 
 def train_ann_model():
     """
@@ -38,6 +46,8 @@ def train_ann_model():
 
     # Splitting the dataset into the Training set and Test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
+
+    years_test = X_test['year'].values
 
     # Feature Scaling
     sc = StandardScaler()
@@ -69,6 +79,13 @@ def train_ann_model():
     test_loss, test_mae = model.evaluate(X_test, y_test)
     print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
+    # Save the predictions to the database
+    save_predictions_to_db(actual_values, predictions, years_test)
+
+    print(f"Number of predictions: {len(predictions)}")
+    print(f"Number of actual values: {len(actual_values)}")
+    print(f"Number of years: {len(years_test)}")
+
     # Print the first 10 predictions and actual values
     print("Prediction vs Actual")
     for i in range(len(predictions)):
@@ -80,5 +97,5 @@ def train_ann_model():
     plt.plot(actual_values, label='Actual', color='blue', linestyle='--', marker='o')
     plt.title('Predictions vs Actual Values ANN Model')
     plt.legend()
-    plt.show()
+    plt.show()   
 train_ann_model()
