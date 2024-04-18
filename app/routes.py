@@ -17,9 +17,34 @@ predictions_ann = Table('predictions_ann', MetaData(), autoload_with=engine)
 
 main_blueprint = Blueprint('main', __name__)
 
-@main_blueprint.route('/api/data', methods=['GET'])
-def get_data():
-    df = pd.read_sql_query(predictions_ann, engine)
+@main_blueprint.route('/api/data/ann', methods=['GET'])
+def get_data_ann():
+    df = pd.read_sql_query('SELECT * FROM predictions_ann', engine)
+
+    response_data = {
+        'labels': df['year'].tolist(),
+        'datasets': [
+            {
+                'label': 'Actual',
+                'data': df['actual'].tolist(),
+                'fill': False,
+                'borderColor': '#FF6384',
+                'backgroundColor': '#FF6384'
+            },
+            {
+                'label': 'Prediction',
+                'data': df['prediction'].tolist(),
+                'fill': False,
+                'borderColor': '#36A2EB',
+                'backgroundColor': '#36A2EB'
+            }
+        ]
+}
+    return jsonify(response_data)
+
+@main_blueprint.route('/api/data/svm', methods=['GET'])
+def get_data_svm():
+    df = pd.read_sql_query('SELECT * FROM svm_prediction', engine)
 
     response_data = {
         'labels': df['year'].tolist(),
