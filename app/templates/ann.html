@@ -4,4 +4,39 @@ ANN
 {% endblock %}
 {% block content %}
 <p>ANN page for Cormacs Final Year Project</p>
+<div>
+    <canvas id="myChart" width="800" height="400"></canvas>
+</div>
 {% endblock %}
+
+<script>
+    async function fetchData() {
+      const response = await fetch('/api/data');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    }
+
+    async function renderChart() {
+      const data = await fetchData();
+
+      const ctx = document.getElementById('myChart').getContext('2d');
+      const myChart = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+      renderChart();
+    });
+  </script>

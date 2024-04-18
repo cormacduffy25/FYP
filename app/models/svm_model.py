@@ -85,11 +85,4 @@ def train_svm_model():
     plt.ylabel('Values')
     plt.legend()
     plt.show()
-# Plotting the Training vs Testing Loss
-    plt.figure(figsize=(10, 6))
-    plt.plot(['Training'], [train_mae], marker='o', linestyle='-', color='red')
-    plt.plot(['Testing'], [test_mae], marker='o', linestyle='-', color='red')
-    plt.title('Training vs Testing Loss (MAE)')
-    plt.ylabel('Mean Absolute Error (MAE)')
-    plt.show()
 train_svm_model()

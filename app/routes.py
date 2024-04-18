@@ -1,7 +1,46 @@
-from flask import render_template, Blueprint, request
+from flask import render_template, Blueprint, request, jsonify
 from flask import Flask
+from sqlalchemy import create_engine, insert, MetaData, Table
+import pandas as pd
+import json
+
+
+def get_db_url():
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+    return config['db_url']
+
+db_url = get_db_url()
+engine = create_engine(db_url)
+predictions_ann = Table('predictions_ann', MetaData(), autoload_with=engine)
+
 
 main_blueprint = Blueprint('main', __name__)
+
+@main_blueprint.route('/api/data', methods=['GET'])
+def get_data():
+    df = pd.read_sql_query(predictions_ann, engine)
+
+    response_data = {
+        'labels': df['year'].tolist(),
+        'datasets': [
+            {
+                'label': 'Actual',
+                'data': df['actual'].tolist(),
+                'fill': False,
+                'borderColor': '#FF6384',
+                'backgroundColor': '#FF6384'
+            },
+            {
+                'label': 'Prediction',
+                'data': df['prediction'].tolist(),
+                'fill': False,
+                'borderColor': '#36A2EB',
+                'backgroundColor': '#36A2EB'
+            }
+        ]
+}
+    return jsonify(response_data)
 
 @main_blueprint.route('/')
 def home():
