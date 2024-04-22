@@ -19,7 +19,7 @@ main_blueprint = Blueprint('main', __name__)
 
 @main_blueprint.route('/api/data/ann', methods=['GET'])
 def get_data_ann():
-    df = pd.read_sql_query('SELECT * FROM predictions_ann', engine)
+    df = pd.read_sql_query('SELECT * FROM predictions_ann ORDER BY year ASC', engine)
 
     response_data = {
         'labels': df['year'].tolist(),

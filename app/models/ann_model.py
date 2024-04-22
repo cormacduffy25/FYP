@@ -23,11 +23,14 @@ def load_data_from_db():
    sql_query = 'SELECT * FROM fuelsources'
    return pd.read_sql_query(sql_query, engine)
 
-def save_predictions_to_db(actuals, predictions, years):
+def save_predictions_to_db(actuals, predictions, years, actuals_train, predictions_train, years_train):
     df = pd.DataFrame({
         'actual': actuals, 
         'prediction': predictions, 
-        'year': years})    
+        'year': years,
+        'actual': actuals_train,
+        'prediction': predictions_train,
+        'year': years_train})    
     df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
 
 def train_ann_model():
@@ -47,7 +50,9 @@ def train_ann_model():
     # Splitting the dataset into the Training set and Test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
 
+    # Extracting the years from the dataset
     years_test = X_test['year'].values
+    years_train = X_train['year'].values
 
     # Feature Scaling
     sc = StandardScaler()
@@ -64,38 +69,60 @@ def train_ann_model():
         Dense(64, activation='relu'),
         Dense(1, activation='linear')
     ])
+
+    #Print Model Summary 
+    print(model.summary())
     # Compiling the ANN
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+    model.compile(optimizer=tf.keras.optimizers.Adamax(learning_rate=0.05,beta_1=0.9, beta_2=0.999, epsilon=1e-07,), loss='mean_squared_error', metrics=['mae'])
     # Fitting the ANN to the Training set
     model.fit(X_train, y_train, validation_split=0.2, epochs=500, batch_size=128)
     # Evaluating the ANN
     model.evaluate(X_test, y_test)
     # Predicting the Test set results
-    predictions = model.predict(X_test)
+    predictions_test = model.predict(X_test)
+    preditctions_train = model.predict(X_train)
     # Flatten the predictions and actual values to 1D array
-    predictions = predictions.flatten()
-    actual_values = y_test.to_numpy()
+    predictions_test = predictions_test.flatten()
+    preditctions_train = preditctions_train.flatten()
+
+    actual_values_test = y_test.to_numpy()
+    actual_values_train = y_train.to_numpy()
     # Print the test loss and test MAE
     test_loss, test_mae = model.evaluate(X_test, y_test)
     print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
     # Save the predictions to the database
-    save_predictions_to_db(actual_values, predictions, years_test)
+    save_predictions_to_db(actual_values_test, predictions_test, years_test, actual_values_train, preditctions_train, years_train)
 
-    print(f"Number of predictions: {len(predictions)}")
-    print(f"Number of actual values: {len(actual_values)}")
+    print(f"Number of predictions: {len(predictions_test)}")
+    print(f"Number of actual values: {len(actual_values_test)}")
     print(f"Number of years: {len(years_test)}")
+    print(f"Number of predictions: {len(preditctions_train)}")
+    print(f"Number of actual values: {len(actual_values_train)}")
+    print(f"Number of years: {len(years_train)}")
 
-    # Print the first 10 predictions and actual values
+    # Print the test predictions and actual values
     print("Prediction vs Actual")
-    for i in range(len(predictions)):
-        print(f"Prediction: {predictions[i]:.4f}, Actual: {actual_values[i]:.4f}")
+    for i in range(len(predictions_test)):
+        print(f"Prediction: {predictions_test[i]:.4f}, Actual: {actual_values_test[i]:.4f}")
+    # Print the train predictions and actual values
+    print("Prediction vs Actual")
+    for i in range(len(preditctions_train)):
+        print(f"Prediction: {preditctions_train[i]:.4f}, Actual: {actual_values_train[i]:.4f}")
 
     # Plot the predictions vs actual values
     plt.figure(figsize=(12, 6))
-    plt.plot(predictions, label='Predictions', color='red', linestyle='--', marker='x')
-    plt.plot(actual_values, label='Actual', color='blue', linestyle='--', marker='o')
-    plt.title('Predictions vs Actual Values ANN Model')
+    plt.plot(predictions_test, label='Predictions', color='red', linestyle='--', marker='x')
+    plt.plot(actual_values_test, label='Actual', color='blue', linestyle='--', marker='o')
+    plt.title('Predictions vs Actual Values ANN Model (Test DATA)')
     plt.legend()
     plt.show()   
+
+    # Plot the predictions vs actual values
+    plt.figure(figsize=(12, 6))
+    plt.plot(preditctions_train, label='Predictions', color='red', linestyle='--', marker='x')
+    plt.plot(actual_values_train, label='Actual', color='blue', linestyle='--', marker='o')
+    plt.title('Predictions vs Actual Values ANN Model (Train Data)')
+    plt.legend()
+    plt.show()  
 train_ann_model()
