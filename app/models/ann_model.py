@@ -134,7 +134,7 @@ def train_ann_model():
     plt.figure(figsize=(12, 6))
     plt.plot([history.history['loss'][i] for i in indices], label='Loss (training data)', marker='o')
     plt.plot([history.history['val_loss'][i] for i in indices], label='Loss (validation data)', marker='o')
-    plt.title('Model Loss Every 50 Epochs')
+    plt.title('Model MSE Loss Every 50 Epochs')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
