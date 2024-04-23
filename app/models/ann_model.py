@@ -4,11 +4,17 @@ from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 from tensorflow import keras
 from keras import Sequential
+from keras.callbacks import Callback
 from keras.layers import Dense, Dropout, BatchNormalization
 import matplotlib.pyplot as plt
 import numpy as np
 from sqlalchemy import create_engine, insert, MetaData, Table
 import json
+
+class PrintEvery50Epochs(Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        if (epoch + 1) % 50 == 0 or epoch == 0:
+           print(f"Epoch {epoch + 1}: loss - {logs['loss']:.4f}, mae - {logs['mae']:.4f}, val_loss - {logs['val_loss']:.4f}, val_mae - {logs['val_mae']:.4f}")
 
 def get_db_url():
     with open('config.json') as config_file:
@@ -75,7 +81,7 @@ def train_ann_model():
     # Compiling the ANN
     model.compile(optimizer=tf.keras.optimizers.Adamax(learning_rate=0.05,beta_1=0.9, beta_2=0.999, epsilon=1e-07,), loss='mean_squared_error', metrics=['mae'])
     # Fitting the ANN to the Training set
-    model.fit(X_train, y_train, validation_split=0.2, epochs=500, batch_size=128)
+    history = model.fit(X_train, y_train, validation_split=0.2, epochs=500, batch_size=128, callbacks=[PrintEvery50Epochs()], verbose=0)
     # Evaluating the ANN
     model.evaluate(X_test, y_test)
     # Predicting the Test set results
@@ -87,19 +93,21 @@ def train_ann_model():
 
     actual_values_test = y_test.to_numpy()
     actual_values_train = y_train.to_numpy()
-    # Print the test loss and test MAE
-    test_loss, test_mae = model.evaluate(X_test, y_test)
-    print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
     # Save the predictions to the database
     save_predictions_to_db(actual_values_test, predictions_test, years_test, actual_values_train, preditctions_train, years_train)
 
+    """
     print(f"Number of predictions: {len(predictions_test)}")
     print(f"Number of actual values: {len(actual_values_test)}")
     print(f"Number of years: {len(years_test)}")
     print(f"Number of predictions: {len(preditctions_train)}")
     print(f"Number of actual values: {len(actual_values_train)}")
     print(f"Number of years: {len(years_train)}")
+    """
+
+    epochs = history.epoch
+    indices = [i for i in epochs if i % 50 == 0 or i == epochs[-1]]
 
     # Print the test predictions and actual values
     print("Prediction vs Actual")
@@ -109,6 +117,10 @@ def train_ann_model():
     print("Prediction vs Actual")
     for i in range(len(preditctions_train)):
         print(f"Prediction: {preditctions_train[i]:.4f}, Actual: {actual_values_train[i]:.4f}")
+
+    # Print the test loss and test MAE
+    test_loss, test_mae = model.evaluate(X_test, y_test)
+    print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
     # Plot the predictions vs actual values
     plt.figure(figsize=(12, 6))
@@ -125,4 +137,27 @@ def train_ann_model():
     plt.title('Predictions vs Actual Values ANN Model (Train Data)')
     plt.legend()
     plt.show()  
+
+    plt.figure(figsize=(12, 6))
+    plt.plot([history.history['mae'][i] for i in indices], label='MAE (training data)', marker='o')
+    plt.plot([history.history['val_mae'][i] for i in indices], label='MAE (validation data)', marker='o')
+    plt.title('Model MAE Every 50 Epochs')
+    plt.ylabel('MAE')
+    plt.xlabel('Epoch')
+    plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
+    plt.legend(loc="upper right")
+    plt.grid(True)
+    plt.show()
+
+    # Plot training & validation loss values every 50 epochs
+    plt.figure(figsize=(12, 6))
+    plt.plot([history.history['loss'][i] for i in indices], label='Loss (training data)', marker='o')
+    plt.plot([history.history['val_loss'][i] for i in indices], label='Loss (validation data)', marker='o')
+    plt.title('Model Loss Every 50 Epochs')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
+    plt.legend(loc="upper right")
+    plt.grid(True)
+    plt.show()
 train_ann_model()
