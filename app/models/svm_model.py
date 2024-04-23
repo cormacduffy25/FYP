@@ -20,18 +20,20 @@ def load_data_from_db():
    sql_query = 'SELECT * FROM fuelsources'
    return pd.read_sql_query(sql_query, engine)
 
-def save_predictions_to_db(actuals, predictions, years):
+def save_predictions_to_db(actuals_test, predictions_test, years_test, actuals_train, predictions_train, years_train):
     df = pd.DataFrame({
-        'actual': actuals, 
-        'prediction': predictions, 
-        'year': years})    
+        'actual': actuals_test, 
+        'prediction': predictions_test, 
+        'year': years_test,
+        'actual': actuals_train,
+        'prediction': predictions_train,
+        'year': years_train})    
     df.to_sql('svm_prediction', con=engine, if_exists='replace', index=False)
 
 def train_svm_model():
 
      # Loading the Data
     train_data = load_data_from_db()
-
     print(train_data.head())
 
     features = ['year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
@@ -43,6 +45,7 @@ def train_svm_model():
 
 
     years_test = X_test['year'].values
+    years_train = X_train['year'].values
 
     # Feature Scaling
     sc = StandardScaler()
@@ -65,24 +68,34 @@ def train_svm_model():
     print(f"Test MAE: {test_mae}")
     print(f"Train MAE: {train_mae}")
 
-    print("Prediction vs Actual")
-    for actual, predicted in zip(np.array(y_test), predictions_test):
-        print(f"Actual: {actual}, Predicted: {predicted}")
-  
-    save_predictions_to_db(y_test, predictions_test, years_test)
+    print("Test Data Predictions:")
+    for actual, predicted in zip(y_test, predictions_test):
+        print(f"Actual: {actual:.4f}, Predicted: {predicted:.4f}")
 
+    # Print predictions and actuals for train data
+    print("Train Data Predictions:")
+    for actual, predicted in zip(y_train, predictions_train):
+        print(f"Actual: {actual:.4f}, Predicted: {predicted:.4f}")
+
+    plot_predictions(predictions_test, y_test, "Test Data")
+    plot_predictions(predictions_train, y_train, "Train Data")
+
+    save_predictions_to_db(y_test, predictions_test, years_test, y_train, predictions_train, years_train)
+
+def plot_predictions(predictions, actuals, title):
 # Plotting
     plt.figure(figsize=(12, 6))
 # Sort the actual and predicted values for plotting
-    indices = np.argsort(y_test)
-    sorted_actual = y_test.iloc[indices].values
-    sorted_predictions = predictions_test[indices]
+    indices = np.argsort(actuals)
+    sorted_actual = actuals.iloc[indices].values
+    sorted_predictions = predictions[indices]
 # Plotting the Actual vs Predicted Values
     plt.plot(sorted_actual, label='Actual Values', color='blue', marker='o')
     plt.plot(sorted_predictions, label='Predicted Values', color='red', linestyle='--', marker='x')
-    plt.title('Actual vs Predicted Values SVM Model')
+    plt.title(f'Actual vs Predicted Values SVM Model({title})')
     plt.xlabel('Index')
     plt.ylabel('Values')
     plt.legend()
     plt.show()
+
 train_svm_model()

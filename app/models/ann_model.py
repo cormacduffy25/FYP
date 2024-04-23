@@ -107,7 +107,7 @@ def train_ann_model():
     """
 
     epochs = history.epoch
-    indices = [i for i in epochs if i % 50 == 0 or i == epochs[-1]]
+    indices = [i for i in epochs if i % 50 == 0 or i == epochs[0]]
 
     # Print the test predictions and actual values
     print("Prediction vs Actual")
@@ -122,21 +122,25 @@ def train_ann_model():
     test_loss, test_mae = model.evaluate(X_test, y_test)
     print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
-    # Plot the predictions vs actual values
-    plt.figure(figsize=(12, 6))
-    plt.plot(predictions_test, label='Predictions', color='red', linestyle='--', marker='x')
-    plt.plot(actual_values_test, label='Actual', color='blue', linestyle='--', marker='o')
-    plt.title('Predictions vs Actual Values ANN Model (Test DATA)')
-    plt.legend()
-    plt.show()   
+    def plot_act_vs_predicted(predicted, actual, title):
+        plt.figure(figsize=(12, 6))
+        plt.plot(predicted, label='Predictions', color='red', linestyle='--', marker='x')
+        plt.plot(actual, label='Actual', color='blue', linestyle='--', marker='o')
+        plt.title(f'Predictions vs Actual Values ANN Model ({title})')
+        plt.legend()
+        plt.show()
 
-    # Plot the predictions vs actual values
+        # Plot training & validation loss values every 50 epochs
     plt.figure(figsize=(12, 6))
-    plt.plot(preditctions_train, label='Predictions', color='red', linestyle='--', marker='x')
-    plt.plot(actual_values_train, label='Actual', color='blue', linestyle='--', marker='o')
-    plt.title('Predictions vs Actual Values ANN Model (Train Data)')
-    plt.legend()
-    plt.show()  
+    plt.plot([history.history['loss'][i] for i in indices], label='Loss (training data)', marker='o')
+    plt.plot([history.history['val_loss'][i] for i in indices], label='Loss (validation data)', marker='o')
+    plt.title('Model Loss Every 50 Epochs')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
+    plt.legend(loc="upper right")
+    plt.grid(True)
+    plt.show()
 
     plt.figure(figsize=(12, 6))
     plt.plot([history.history['mae'][i] for i in indices], label='MAE (training data)', marker='o')
@@ -149,15 +153,6 @@ def train_ann_model():
     plt.grid(True)
     plt.show()
 
-    # Plot training & validation loss values every 50 epochs
-    plt.figure(figsize=(12, 6))
-    plt.plot([history.history['loss'][i] for i in indices], label='Loss (training data)', marker='o')
-    plt.plot([history.history['val_loss'][i] for i in indices], label='Loss (validation data)', marker='o')
-    plt.title('Model Loss Every 50 Epochs')
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
-    plt.legend(loc="upper right")
-    plt.grid(True)
-    plt.show()
+    plot_act_vs_predicted(predictions_test, actual_values_test, "Test Data")
+    plot_act_vs_predicted(preditctions_train, actual_values_train, "Train Data")
 train_ann_model()

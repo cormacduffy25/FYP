@@ -44,7 +44,7 @@ def get_data_ann():
 
 @main_blueprint.route('/api/data/svm', methods=['GET'])
 def get_data_svm():
-    df = pd.read_sql_query('SELECT * FROM svm_prediction', engine)
+    df = pd.read_sql_query('SELECT * FROM svm_prediction ORDER BY year ASC', engine)
 
     response_data = {
         'labels': df['year'].tolist(),
