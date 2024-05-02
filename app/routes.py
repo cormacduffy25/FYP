@@ -79,10 +79,6 @@ def about():
 def contact():
     return render_template('contact.html')
 
-@main_blueprint.route('/svm/')
-def svm():
-    return render_template('svm.html')
-
-@main_blueprint.route('/ann/')
-def ann():
-    return render_template('ann.html')
+@main_blueprint.route('/models/')
+def models():
+    return render_template('models.html')
