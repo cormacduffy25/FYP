@@ -1,14 +1,17 @@
 {% extends "layout.html" %}
 {% block title %}
-ANN
+Models
 {% endblock %}
 {% block content %}
-<p>ANN page for Cormacs Final Year Project</p>
-<div>
-    <canvas id="annChart" width="800" height="400"></canvas>
-</div>
-<div>
-    <canvas id="svmChart" width="800" height="400"></canvas>
+<p>Models page for Cormacs Final Year Project</p>
+
+<div class="charts-container">
+    <div class="chart" id="annChartContainer">
+        <canvas id="annChart" width="800" height="400"></canvas>
+    </div>
+    <div class="chart" id="svmChartContainer">
+        <canvas id="svmChart" width="800" height="400"></canvas>
+    </div>
 </div>
 
 <script>
@@ -23,6 +26,8 @@ ANN
                 datasets: data.datasets
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                 title: {
                     display: true,
@@ -32,15 +37,15 @@ ANN
                 scales: {
                     y: {
                         beginAtZero: true,
-                        scaleLabel: {
+                        title: {
                             display: true,
-                            labelString: 'Electric Pricing pence/kWh' // Y-axis label
+                            text: 'Electric Pricing pence/kWh' // Y-axis label
                         }
                     },
                     x: {
-                        scaleLabel: {
+                        title: {
                             display: true,
-                            labelString: 'Year' // X-axis label
+                            text: 'Year' // X-axis label
                         }
                     }
                 },
@@ -70,15 +75,15 @@ ANN
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
+                        title: {
                             display: true,
-                            labelString: 'Electric Pricing pence/kWh' // Y-axis label
+                            text: 'Electric Pricing pence/kWh' // Y-axis label
                         }
                     },
                     x: {
-                        scaleLabel: {
+                        title: {
                             display: true,
-                            labelString: 'Year' // X-axis label
+                            text: 'Year' // X-axis label
                         }
                     }
                 },

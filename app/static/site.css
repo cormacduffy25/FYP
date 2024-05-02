@@ -37,3 +37,14 @@
     padding: 5px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns, each taking up 1 fraction of the available space */
+    gap: 20px; /* Gap between the charts */
+}
+
+.chart {
+    width: 100%; /* Each chart takes up the full width of its container */
+    min-width: 300px; /* Minimum width of each chart to avoid too much squeezing */
+}
