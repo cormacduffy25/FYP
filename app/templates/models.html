@@ -13,14 +13,70 @@ Models
         <canvas id="svmChart" width="800" height="400"></canvas>
     </div>
 </div>
+<div class ="calculator">
+    <input type ="number" id="kWh" placeholder="Enter the number of kWh" min ="0">
+    <select id="yearSelect">
+        <option value="2022">2022</option>
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+    </select>
+    <select id="modelSelect">
+        <option value="SVM">SVM</option>
+        <option value="ANN">ANN</option>
+    </select>
+    <button onclick="performCalculation()">Calculate</button>
+    <div id="output"></div>
+</div>
+
 
 <script>
-    fetch('/api/data/ann')
+    function performCalculation() {
+        const kwhInput = document.getElementById('kWh'); // Get the input element
+        const kwh = parseFloat(kwhInput.value); // Directly convert the input's value to a number
+
+        // Validate input
+        if (kwh < 0 || isNaN(kwh)) {
+            document.getElementById('output').innerText = 'Invalid input. Please enter a positive number.';
+            return; // Important to return here to stop further execution
+        }
+
+        const year = document.getElementById('yearSelect').value;
+        const model = document.getElementById('modelSelect').value;
+        const url = `/api/costs?model=${model}&year=${year}&kwh=${kwh}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Make sure your API is returning a cost value in the response
+                if (data && data.cost !== undefined) {
+                    document.getElementById('output').innerText = `Total cost: ${data.cost.toFixed(2)} GBP`;
+                } else {
+                    // Handle cases where the cost might not be returned in the response
+                    document.getElementById('output').innerText = 'No cost data was returned from the API.';
+                }
+            })
+            .catch(error => {
+                console.error('Failed to fetch data:', error);
+                document.getElementById('output').innerText = 'Error calculating costs.';
+            });
+    }
+</script>
+
+
+<script>
+    function createModelChart(endpoint, chartId, titleText) {
+    fetch(endpoint)
       .then(response => response.json())
       .then(data => {
-        var ctx = document.getElementById('annChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-            type: 'line', 
+        const ctx = document.getElementById(chartId).getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
             data: {
                 labels: data.labels,
                 datasets: data.datasets
@@ -29,73 +85,36 @@ Models
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                title: {
-                    display: true,
-                    text: 'ANN Model Performance'
-                }
-            },
+                    title: {
+                        display: true,
+                        text: titleText
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Electric Pricing pence/kWh' // Y-axis label
+                            text: 'Electric Pricing pence/kWh'
                         }
                     },
                     x: {
                         title: {
                             display: true,
-                            text: 'Year' // X-axis label
+                            text: 'Year'
                         }
                     }
-                },
-            }
-        });
-      })
-      .catch(error => console.error('Error loading the data: ', error));
-  </script>
- <script>
-    fetch('/api/data/svm')
-      .then(response => response.json())
-      .then(data => {
-        var ctx = document.getElementById('svmChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: data.datasets
-            },
-            options: {
-                plugins: {
-                title: {
-                    display: true,
-                    text: 'SVM Model Performance'
                 }
-            },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Electric Pricing pence/kWh' // Y-axis label
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Year' // X-axis label
-                        }
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'SVM Model Performance' // Chart Title
-                },
-                responsive: true,
-                maintainAspectRatio: false
             }
         });
       })
-      .catch(error => console.error('Error loading the data: ', error));
+      .catch(error => {
+          console.error('Error loading the data: ', error);
+          // Display an error message on the page
+          document.getElementById(chartId).parentElement.innerHTML = '<p>Error loading data!</p>';
+      });
+}
+createModelChart('/api/data/ann', 'annChart', 'ANN Model Performance');
+createModelChart('/api/data/svm', 'svmChart', 'SVM Model Performance'); 
   </script>  
 {% endblock %}

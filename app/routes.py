@@ -67,6 +67,31 @@ def get_data_svm():
 }
     return jsonify(response_data)
 
+@main_blueprint.route('/api/costs', methods=['GET'])
+def calculate_costs():
+    model = request.args.get('model', 'ann')
+    year = request.args.get('year', type=int)
+    kwh = request.args.get('kwh', type=float)  # Ensure kwh is obtained as a float
+
+    # Assuming `fetch_prediction_data` returns the price per kWh
+    predicted_price = fetch_prediction_data(year, model)
+    if predicted_price is None:
+        return jsonify({'error': 'No data available for selected year and model'}), 404
+
+    if kwh is None or kwh < 0:
+        return jsonify({'error': 'Invalid kWh value. Please provide a positive number.'}), 400
+
+    cost = (predicted_price * kwh)/100  # Calculate total cost based on kWh input and model prediction
+    return jsonify({'cost': cost})
+
+def fetch_prediction_data(year, model):
+    table = 'predictions_ann' if model.lower() == 'ann' else 'svm_prediction'
+    query = f"SELECT prediction FROM {table} WHERE year = {year}"
+    df = pd.read_sql_query(query, engine)
+    return df['prediction'].iloc[0] if not df.empty else None
+
+
+
 @main_blueprint.route('/')
 def home():
     return render_template('home.html')
