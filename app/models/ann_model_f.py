@@ -81,7 +81,7 @@ def train_ann_model():
     x = train_data[feature_columns]  # Your input features
     y = train_data[target_columns]  # Your target variable
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 32)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.4, random_state = 32)
 
     sc = StandardScaler()
     x_train = sc.fit_transform(x_train)
@@ -131,7 +131,7 @@ def train_ann_model():
         for j, fuel_type in enumerate(target_columns):  # Iterate over each fuel type
          print(f"{fuel_type} - Prediction: {predictions_train[i, j]:.4f}, Actual: {actual_values_train[i, j]:.4f}")
 
-
+    plot_act_vs_predicted(predictions_train, actual_values_train, 'Train Data')
     plot_act_vs_predicted(predicted_coal_prices, actual_coal_prices, 'Coal Price')
     plot_act_vs_predicted(predicted_oil_prices, actual_oil_prices, 'Oil Price')
     plot_act_vs_predicted(predicted_gas_prices, actual_gas_prices, 'Gas Price')
