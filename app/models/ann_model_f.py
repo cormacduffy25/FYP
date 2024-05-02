@@ -11,6 +11,7 @@ import numpy as np
 from sqlalchemy import create_engine, insert, MetaData, Table
 import json
 import os
+import joblib
 
 class PrintEvery50Epochs(Callback):
     def on_epoch_end(self, epoch, logs=None):
@@ -78,6 +79,8 @@ def train_ann_model():
     x_train = sc.fit_transform(x_train)
     x_test = sc.transform(x_test)
 
+    joblib.dump(sc, 'scaler.gz')
+
     model = Sequential([
         Dense(64, activation='relu', input_shape=(x_train.shape[1],)),
         BatchNormalization(),
@@ -96,7 +99,7 @@ def train_ann_model():
     predictions_test = model.predict(x_test)
     predictions_train = model.predict(x_train)
 
-    
+    model.save('ann_model_f.h5')
 
     actual_values_test = y_test.to_numpy()
     actual_values_train = y_train.to_numpy()
@@ -104,7 +107,7 @@ def train_ann_model():
     coal_index = target_columns.index('coalprice')
     actual_coal_prices = y_test['coalprice'].values
     predicted_coal_prices = predictions_test[:, coal_index]
-
+    
     print("Prediction vs Actual - Test Data")
     for i in range(len(predictions_test)):  # Iterate over samples
         print(f"Sample {i + 1}")
@@ -131,3 +134,54 @@ def train_ann_model():
     save_metrics_to_csv(test_loss, test_mae)
     
 train_ann_model()
+
+def get_initial_features():
+    sql_query = """
+    SELECT
+        coalprice as coalprice_lag1, oilprice as oilprice_lag1, gasprice as gasprice_lag1, nuclearprice as nuclearprice_lag1, hydroprice as hydroprice_lag1, windsolarprice as windsolarprice_lag1, cokebreezeprice as cokebreezeprice_lag1,
+        LAG(coalprice, 1) OVER (ORDER BY year) as coalprice_lag2, LAG(oilprice, 1) OVER (ORDER BY year) as oilprice_lag2, LAG(gasprice, 1) OVER (ORDER BY year) as gasprice_lag2, LAG(nuclearprice, 1) OVER (ORDER BY year) as nuclearprice_lag2, LAG(hydroprice, 1) OVER (ORDER BY year) as hydroprice_lag2, LAG(windsolarprice, 1) OVER (ORDER BY year) as windsolarprice_lag2, LAG(cokebreezeprice, 1) OVER (ORDER BY year) as cokebreezeprice_lag2,
+        LAG(coalprice, 2) OVER (ORDER BY year) as coalprice_lag3, LAG(oilprice, 2) OVER (ORDER BY year) as oilprice_lag3, LAG(gasprice, 2) OVER (ORDER BY year) as gasprice_lag3, LAG(nuclearprice, 2) OVER (ORDER BY year) as nuclearprice_lag3, LAG(hydroprice, 2) OVER (ORDER BY year) as hydroprice_lag3, LAG(windsolarprice, 2) OVER (ORDER BY year) as windsolarprice_lag3, LAG(cokebreezeprice, 2) OVER (ORDER BY year) as cokebreezeprice_lag3
+    FROM fuel_sources_lagged
+    WHERE year = 2022
+    """
+    engine = create_engine(db_url)
+    data = pd.read_sql_query(sql_query, engine)
+    if not data.empty:
+        return data.iloc[0].values.reshape(1, -1)  # Ensure the output is in 2D array format
+    else:
+        raise Exception("No data found for prediction")
+    
+def update_lagged_features(features, new_predictions):
+    new_features = np.roll(features, -len(new_predictions))
+    new_features[-len(new_predictions):] = new_predictions
+    return new_features
+
+def recursive_forecasting(model, initial_features, scaler, steps=3):
+    predictions = []  # This will store all predictions
+    current_features = initial_features
+
+    for _ in range(steps):
+        current_features_scaled = scaler.transform(current_features)
+        prediction = model.predict(current_features_scaled)[0]  # Single prediction
+        predictions.append(prediction)  # Append single prediction to the list
+        current_features = update_lagged_features(current_features.flatten(), prediction).reshape(1, -1)
+
+    return predictions
+
+def main():
+    model_path = 'ann_model_f.h5'
+    scaler_path = 'scaler.gz'
+    steps = 3
+
+    model = tf.keras.models.load_model(model_path)
+    scaler = joblib.load(scaler_path)
+
+    initial_features = get_initial_features()
+
+    predictions = recursive_forecasting(model, initial_features, scaler, steps=steps)
+
+    for i, prediction in enumerate(predictions):
+        print(f"Forecast for Step {i+1}: {prediction}")
+
+if __name__ == "__main__":
+    main()
