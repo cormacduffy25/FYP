@@ -91,11 +91,13 @@ def train_ann_model():
 
     model = Sequential([
         Dense(128, activation='relu', input_shape=(x_train.shape[1],)),
+        BatchNormalization(),
         Dense(64, activation='relu'),
+        Dropout(0.2),
         Dense(y_train.shape[1], activation='relu')
     ])
 
-    model.compile(optimizer= tf.keras.optimizers.RMSprop(learning_rate=0.001,rho=0.9), loss='mean_squared_error', metrics=['mae'])
+    model.compile(optimizer= tf.keras.optimizers.Adamax(learning_rate=0.005), loss='mean_squared_error', metrics=['mae'])
     model.fit(x_train, y_train, epochs=500, batch_size=64, validation_split=0.1, callbacks=[PrintEvery50Epochs()], verbose =0)
     test_loss, test_mae = model.evaluate(x_test, y_test)
 

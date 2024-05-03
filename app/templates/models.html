@@ -90,55 +90,57 @@ Models
     }
 </script>
 
-
 <script>
-    function createModelChart(endpoint, chartId, titleText) {
-    fetch(endpoint)
-      .then(response => response.json())
-      .then(data => {
-        const processedDatasets = processChartData(data.datasets);
-        const ctx = document.getElementById(chartId).getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: processedDatasets
+function setupChart(ctx, data, titleText) {
+    const processedDatasets = processChartData(data.datasets);
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: processedDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: titleText
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
+            scales: {
+                y: {
+                    beginAtZero: true,
                     title: {
                         display: true,
-                        text: titleText
+                        text: 'Electric Pricing pence/kWh'
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Electric Pricing pence/kWh'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Year'
-                        }
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Year'
                     }
-                },
-                spanGaps: true
-            }
-        });
-      })
-      .catch(error => {
-          console.error('Error loading the data: ', error);
-          // Display an error message on the page
-          document.getElementById(chartId).parentElement.innerHTML = '<p>Error loading data!</p>';
-      });
+                }
+            },
+            spanGaps: true
+        }
+    });
 }
-createModelChart('/api/data/ann', 'annChart', 'ANN Model Performance');
-createModelChart('/api/data/svm', 'svmChart', 'SVM Model Performance'); 
-  </script>  
+
+function fetchDataAndCreateChart(endpoint, chartId, title) {
+    fetch(endpoint)
+    .then(response => response.json())
+    .then(data => setupChart(document.getElementById(chartId).getContext('2d'), data, title))
+    .catch(error => {
+        console.error('Error loading the data: ', error);
+        document.getElementById(chartId).parentElement.innerHTML = '<p>Error loading data!</p>';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetchDataAndCreateChart('/api/data/ann', 'annChart', 'ANN Model Performance');
+    fetchDataAndCreateChart('/api/data/svm', 'svmChart', 'SVM Model Performance');
+});
+</script>
 {% endblock %}

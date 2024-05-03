@@ -54,13 +54,21 @@ def save_predictions_to_db(actuals_test, predictions_test, years_test, actuals_t
     combined_df.to_sql('svm_prediction', con=engine, if_exists='replace', index=False)
     print("Data saved to database successfully.")
 
-def save_forecast_to_db(years, predictions):
-    df = pd.DataFrame({
-        'year': years,
-        'predicted_avg_price': predictions
-    })
-    df.to_sql('fuelsources_forecasted__predicted_svm', con=engine, if_exists='replace', index=False)
-    print("Forecasted data saved to database successfully.")
+def plot_predictions(predictions, actuals, title):
+# Plotting
+    plt.figure(figsize=(12, 6))
+# Sort the actual and predicted values for plotting
+    indices = np.argsort(actuals)
+    sorted_actual = actuals.iloc[indices].values
+    sorted_predictions = predictions[indices]
+# Plotting the Actual vs Predicted Values
+    plt.plot(sorted_actual, label='Actual Values', color='blue', marker='o')
+    plt.plot(sorted_predictions, label='Predicted Values', color='red', linestyle='--', marker='x')
+    plt.title(f'Actual vs Predicted Values SVM Model({title})')
+    plt.xlabel('Index')
+    plt.ylabel('Values')
+    plt.legend()
+    plt.show()
 
 def train_svm_model():
 
@@ -73,16 +81,16 @@ def train_svm_model():
     y = train_data['avgprice']  # Your target variable
 
     # Splitting the dataset into the Training set and Test set
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32 , shuffle=True)
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32 , shuffle=True)
 
 
-    years_test = X_test['year'].values
-    years_train = X_train['year'].values
+    years_test = x_test['year'].values
+    years_train = x_train['year'].values
 
     # Feature Scaling
     sc = StandardScaler()
-    X_train_scaled = sc.fit_transform(X_train)
-    X_test_scaled = sc.transform(X_test)
+    x_train_scaled = sc.fit_transform(x_train)
+    x_test_scaled = sc.transform(x_test)
 
     # Initialising the SVM
     model = SVR()
@@ -95,13 +103,13 @@ def train_svm_model():
     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error', verbose=2)
 
     # Fitting the SVM to the Training set
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(x_train_scaled, y_train)
 
     best_model = grid_search.best_estimator_
     
     # Predicting the Test set results
-    predictions_test = best_model.predict(X_test_scaled)
-    predictions_train = best_model.predict(X_train_scaled)
+    predictions_test = best_model.predict(x_test_scaled)
+    predictions_train = best_model.predict(x_train_scaled)
 
     forecast_data = get_forecasted_fuel_prices()
     print(forecast_data.head())
@@ -125,25 +133,12 @@ def train_svm_model():
     for actual, predicted in zip(y_train, predictions_train):
         print(f"Actual: {actual:.4f}, Predicted: {predicted:.4f}")
 
+    # Print forecasted prices
+    for year, price in zip(years_forecast, forecasted_prices):
+        print(f"Year: {year}, Forecasted Price: {price:.4f}")
+
     plot_predictions(predictions_test, y_test, "Test Data")
     plot_predictions(predictions_train, y_train, "Train Data")
 
     save_predictions_to_db(y_test, predictions_test, years_test, y_train, predictions_train, years_train, forecasted_prices, years_forecast)
-
-def plot_predictions(predictions, actuals, title):
-# Plotting
-    plt.figure(figsize=(12, 6))
-# Sort the actual and predicted values for plotting
-    indices = np.argsort(actuals)
-    sorted_actual = actuals.iloc[indices].values
-    sorted_predictions = predictions[indices]
-# Plotting the Actual vs Predicted Values
-    plt.plot(sorted_actual, label='Actual Values', color='blue', marker='o')
-    plt.plot(sorted_predictions, label='Predicted Values', color='red', linestyle='--', marker='x')
-    plt.title(f'Actual vs Predicted Values SVM Model({title})')
-    plt.xlabel('Index')
-    plt.ylabel('Values')
-    plt.legend()
-    plt.show()
-
 train_svm_model()

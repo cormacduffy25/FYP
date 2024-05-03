@@ -45,6 +45,14 @@ def save_predictions_to_db(actuals, predictions, years, actuals_train, predictio
     combined_df = pd.concat([test_df, train_df])
     combined_df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
     print("Data saved to database successfully.")
+
+def plot_act_vs_predicted(predicted, actual, title):
+    plt.figure(figsize=(12, 6))
+    plt.plot(predicted, label='Predictions', color='red', linestyle='--', marker='x')
+    plt.plot(actual, label='Actual', color='blue', linestyle='--', marker='o')
+    plt.title(f'Predictions vs Actual Values ANN Model ({title})')
+    plt.legend()
+    plt.show()
     
 def train_ann_model():
     """
@@ -57,24 +65,24 @@ def train_ann_model():
     print(train_data.head())
     
     features = ['year', 'coalprice','oilprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
-    X = train_data[features]  # Your input features
+    x = train_data[features]  # Your input features
     y = train_data['avgprice']  # Your target variable
 
     # Splitting the dataset into the Training set and Test set
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0, shuffle=True)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 0, shuffle=True)
 
     # Extracting the years from the dataset
-    years_test = X_test['year'].values
-    years_train = X_train['year'].values
+    years_test = x_test['year'].values
+    years_train = x_train['year'].values
 
     # Feature Scaling
     sc = StandardScaler()
-    X_train = sc.fit_transform(X_train)
-    X_test = sc.transform(X_test)
+    x_train_scaled = sc.fit_transform(x_train)
+    x_test_scaled = sc.transform(x_test)
 
     # Initialising the ANN 
     model = Sequential([
-        Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+        Dense(64, activation='relu', input_shape=(x_train_scaled.shape[1],)),
         BatchNormalization(),
         Dropout(0.2),
         Dense(128, activation='relu'),
@@ -88,12 +96,12 @@ def train_ann_model():
     # Compiling the ANN
     model.compile(optimizer=tf.keras.optimizers.Adamax(learning_rate=0.05,beta_1=0.9, beta_2=0.999, epsilon=1e-07,), loss='mean_squared_error', metrics=['mae'])
     # Fitting the ANN to the Training set
-    history = model.fit(X_train, y_train, validation_split=0.2, epochs=500, batch_size=128, callbacks=[PrintEvery50Epochs()], verbose=0)
+    history = model.fit(x_train_scaled, y_train, validation_split=0.2, epochs=500, batch_size=128, callbacks=[PrintEvery50Epochs()], verbose=0)
     # Evaluating the ANN
-    model.evaluate(X_test, y_test)
+    model.evaluate(x_train_scaled, y_test)
     # Predicting the Test set results
-    predictions_test = model.predict(X_test)
-    preditctions_train = model.predict(X_train)
+    predictions_test = model.predict(x_test_scaled)
+    preditctions_train = model.predict(x_train_scaled)
     # Flatten the predictions and actual values to 1D array
     predictions_test = predictions_test.flatten()
     preditctions_train = preditctions_train.flatten()
@@ -126,16 +134,9 @@ def train_ann_model():
         print(f"Prediction: {preditctions_train[i]:.4f}, Actual: {actual_values_train[i]:.4f}")
 
     # Print the test loss and test MAE
-    test_loss, test_mae = model.evaluate(X_test, y_test)
+    test_loss, test_mae = model.evaluate(x_test, y_test)
     print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 
-    def plot_act_vs_predicted(predicted, actual, title):
-        plt.figure(figsize=(12, 6))
-        plt.plot(predicted, label='Predictions', color='red', linestyle='--', marker='x')
-        plt.plot(actual, label='Actual', color='blue', linestyle='--', marker='o')
-        plt.title(f'Predictions vs Actual Values ANN Model ({title})')
-        plt.legend()
-        plt.show()
 
         # Plot training & validation loss values every 50 epochs
     plt.figure(figsize=(12, 6))
