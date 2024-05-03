@@ -57,17 +57,7 @@ def save_metrics_to_csv(test_loss, test_mae, filename='model_performance.csv'):
     # Save the updated DataFrame back to CSV
     df.to_csv(filename, index=False)
     print(f"Metrics saved to {filename}")
-""""
-def save_predictions_to_db(actuals, predictions, years, actuals_train, predictions_train, years_train):
-    df = pd.DataFrame({
-        'actual': actuals, 
-        'prediction': predictions, 
-        'year': years,
-        'actual': actuals_train,
-        'prediction': predictions_train,
-        'year': years_train})    
-    df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
-"""
+
 def train_ann_model():
 
     train_data = load_data_from_db()
@@ -81,7 +71,7 @@ def train_ann_model():
     x = train_data[feature_columns]  # Your input features
     y = train_data[target_columns]  # Your target variable
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.4, random_state = 32)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.4, shuffle=True, random_state=42)
 
     sc = StandardScaler()
     x_train = sc.fit_transform(x_train)
@@ -98,7 +88,7 @@ def train_ann_model():
     ])
 
     model.compile(optimizer= tf.keras.optimizers.Adamax(learning_rate=0.005), loss='mean_squared_error', metrics=['mae'])
-    model.fit(x_train, y_train, epochs=500, batch_size=64, validation_split=0.1, callbacks=[PrintEvery50Epochs()], verbose =0)
+    history = model.fit(x_train, y_train, epochs=500, batch_size=64, validation_split=0.1, callbacks=[PrintEvery50Epochs()], verbose =0)
     test_loss, test_mae = model.evaluate(x_test, y_test)
 
     predictions_test = model.predict(x_test)
@@ -139,6 +129,32 @@ def train_ann_model():
     plot_act_vs_predicted(predicted_gas_prices, actual_gas_prices, 'Gas Price')
     print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
     save_metrics_to_csv(test_loss, test_mae)
+
+    epochs = history.epoch
+    indices = [i for i in epochs if i % 50 == 0 or i == epochs[0]]
+    # Plot training & validation loss values every 50 epochs
+    plt.figure(figsize=(12, 6))
+    plt.plot([history.history['loss'][i] for i in indices], label='Loss (training data)', marker='o')
+    plt.plot([history.history['val_loss'][i] for i in indices], label='Loss (validation data)', marker='o')
+    plt.title('Model MSE Loss Every 50 Epochs')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
+    plt.legend(loc="upper right")
+    plt.grid(True)
+    plt.show()
+
+    plt.figure(figsize=(12, 6))
+    plt.plot([history.history['mae'][i] for i in indices], label='MAE (training data)', marker='o')
+    plt.plot([history.history['val_mae'][i] for i in indices], label='MAE (validation data)', marker='o')
+    plt.title('Model MAE Every 50 Epochs')
+    plt.ylabel('MAE')
+    plt.xlabel('Epoch')
+    plt.xticks(range(len(indices)), labels=[str(i+1) for i in indices])  # Set x-ticks to show epoch numbers
+    plt.legend(loc="upper right")
+    plt.grid(True)
+    plt.show()
+
     
 train_ann_model()
 

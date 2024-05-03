@@ -1,25 +1,25 @@
 .message {
     font-weight: 600;
-    color:blue;
+    color: #E64833; /* Updated from blue to bright red for high visibility */
 }
+
 .navbar {
-    background-color: slategray;
+    background-color: #244855; /* Dark cyan-blue shade for the navbar background */
     font-size: 1.5em;
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    color: white;
+    color: #FBE9D0; /* Light cream for text color to contrast with dark navbar */
     padding: 20px 10px;
-    
 }
+
 .navbar a {
     text-decoration: none;
-    color: inherit;
+    color: inherit; /* Keeps the link colors consistent with the navbar text color */
     padding: 20px 10px;
     text-transform: uppercase;
-    
 }
 
 .navbar a:hover {
-    color: #000000;
+    color: #90AEAD; /* Soft teal for hover state */
 }
 
 .navbar-brand {
@@ -27,15 +27,16 @@
     font-weight: 600;
 }
 
-.nav-item{
+.nav-item {
     font-variant: small-caps;
     margin-left: 60px;
     margin-right: 60px;
 }
 
-.body-content{
+.body-content {
     padding: 5px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #FBE9D0; /* Light cream background for content areas */
 }
 
 .charts-container {
@@ -47,16 +48,18 @@
 .chart {
     width: 100%; /* Each chart takes up the full width of its container */
     min-width: 300px; /* Minimum width of each chart to avoid too much squeezing */
+    background-color: #FBE9D0; /* Light Cream background for charts */
 }
 
 .calculator {
-    background-color: #f9f9f9;
+    background-color: #874F41; /* Earthy brown for the calculator background */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     width: 100%;
     max-width: 600px;
     margin: auto;
+    color: #FBE9D0; /* Light cream text color for readability */
 }
 
 .input-group {
@@ -67,19 +70,19 @@ label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px;
-    color: #333;
+    color: #FBE9D0; /* Light cream color for labels */
 }
 
 input, select, button {
     width: 100%;
     padding: 10px;
     margin-top: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid #000000;
     border-radius: 4px;
 }
 
 button {
-    background-color: #4CAF50;
+    background-color: #E64833; /* Bright red for buttons */
     color: white;
     border: none;
     cursor: pointer;
@@ -87,7 +90,7 @@ button {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #C5372D; /* Darkened shade of red for button hover state */
 }
 
 #output {
@@ -100,7 +103,7 @@ button:hover {
 
 .contact-info {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f2f2f2;
+    background-color: #FBE9D0; /* Light cream background for contact info sections */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -120,7 +123,7 @@ button:hover {
 
 .contact-list i {
     margin-right: 8px;
-    color: #4CAF50; /* Adjust the color to match your site's theme */
+    color: #E64833; /* Bright red for icons in the contact list */
 }
 
 .contact-list a {
@@ -130,5 +133,34 @@ button:hover {
 }
 
 .contact-list a:hover {
-    color: #4CAF50;
+    color: #E64833; /* Bright red for hover state of links */
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: #FBE9D0; /* This is your light cream color from the palette */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Example font */
+    color: #333; /* Default text color */
+}
+body {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+}
+
+.content{
+    flex-grow: 1;
+}
+footer {
+    grid-row-start: 3;
+    background-color: #244855; /* Dark cyan-blue, matching the navbar */
+    color: #FBE9D0;
+    text-align: center;
+    padding: 2px 0;
+    bottom: 0;
+    width: 100%;
 }
