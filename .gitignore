@@ -1,4 +1,9 @@
+# Ignore configuration files
 config.json
-model_perormance.csv
+
+# Ignore data files
+model_performance.csv
+
+# Ignore model and scaler files
 ann_model.h5
 scaler.gz
