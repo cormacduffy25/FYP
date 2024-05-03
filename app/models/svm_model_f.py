@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
@@ -6,6 +7,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sqlalchemy import create_engine
 import json
 
+# Function to load database configuration and connect to the engine
 def get_db_url():
     with open('config.json') as config_file:
         config = json.load(config_file)
@@ -16,33 +18,31 @@ engine = create_engine(db_url)
 
 def load_data_from_db():
     sql_query = 'SELECT * FROM fuel_sources_lagged'
-    data = pd.read_sql_query(sql_query, engine)
-    return data
+    return pd.read_sql_query(sql_query, engine)
 
-# Load the dataset
+# Load and clean the dataset
 data = load_data_from_db()
-
-# Dropping rows with missing values
-data_cleaned = data.dropna()
+data.dropna(inplace=True)
 
 fuel_types = ['oilprice', 'coalprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
 all_forecasts = {}
 
 for fuel in fuel_types:
-    # Generating lagged features for forecasting
+    # Prepare lagged features for forecasting
     for lag in [1, 2, 3]:
-        data_cleaned[f'{fuel}_lag{lag}'] = data_cleaned[fuel].shift(lag)
+        data[f'{fuel}_lag{lag}'] = data[fuel].shift(lag)
     
-    data_model = data_cleaned.dropna()  # Drop rows with any NaN values
+    data_model = data.dropna()
 
-    # Features and target for the model
+    # Define features and target
     features = [f'{fuel}_lag{lag}' for lag in [1, 2, 3]]
     X = data_model[features]
     y = data_model[fuel]
 
-    # Scaling the features
+    # Scale the features
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
     # Define the model and grid search parameters
     model = SVR()
@@ -55,16 +55,22 @@ for fuel in fuel_types:
 
     # Setup the GridSearchCV
     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error', verbose=2)
-    grid_search.fit(X_scaled, y)
+    grid_search.fit(X_train, y_train)
 
-    # Best parameters and best score
-    print(f"Best parameters for {fuel}:", grid_search.best_params_)
-    print(f"Best cross-validation score for {fuel} (negative MSE):", grid_search.best_score_)
-
-    # Use the best estimator to forecast future years
+    # Use the best estimator to make predictions
     best_model = grid_search.best_estimator_
-    latest_scaled = scaler.transform(data.iloc[-1][features].values.reshape(1, -1))
+    y_pred = best_model.predict(X_test)
+    test_mae = mean_absolute_error(y_test, y_pred)
+    test_mse = mean_squared_error(y_test, y_pred)
 
+    print(f"Best parameters for {fuel}: {grid_search.best_params_}")
+    print(f"Best cross-validation score for {fuel} (negative MSE): {grid_search.best_score_}")
+    print(f"Test MAE for {fuel}: {test_mae}")
+    print(f"Test MSE for {fuel}: {test_mse}")
+
+    # Forecasting future values using recursive predictions
+    latest_features = data.iloc[-1][features].values.reshape(1, -1)
+    latest_scaled = scaler.transform(latest_features)
     predictions = {}
     years_to_predict = [2023, 2024, 2025]
     current_features = latest_scaled
@@ -72,16 +78,16 @@ for fuel in fuel_types:
     for year in years_to_predict:
         forecast = best_model.predict(current_features)[0]
         predictions[year] = forecast
-        current_features = scaler.transform([[forecast] + list(current_features[0, :-1])])
+        current_features = scaler.transform(np.array([[forecast] + list(current_features[0, :-1])]))
 
     all_forecasts[fuel] = predictions
 
+# Save the forecasts to the database
 forecast_df = pd.DataFrame(all_forecasts)
+forecast_df.index = [2023, 2024, 2025]
 forecast_df.index.name = 'year'
 forecast_df.reset_index(inplace=True)
-
 forecast_df.to_sql('fuelsources_forecasted_svm', con=engine, if_exists='replace', index=False)
 
 print("Data successfully saved to the database.")
-
 print(all_forecasts)

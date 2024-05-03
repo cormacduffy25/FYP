@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error 
@@ -42,6 +42,7 @@ def save_predictions_to_db(actuals_test, predictions_test, years_test, actuals_t
     
     forecast_df = pd.DataFrame({
         'type': 'forecast',
+        'actual': 0,
         'prediction': forecasted_prices,
         'year': forecasted_years
     })
@@ -80,25 +81,34 @@ def train_svm_model():
 
     # Feature Scaling
     sc = StandardScaler()
-    X_train = sc.fit_transform(X_train)
-    X_test = sc.transform(X_test)
+    X_train_scaled = sc.fit_transform(X_train)
+    X_test_scaled = sc.transform(X_test)
 
     # Initialising the SVM
-    model = SVR(kernel='rbf',C=100,gamma=0.01,epsilon=0.01)
+    model = SVR()
+    param_grid = {'kernel': ['rbf'],
+        'C': [1, 10, 100, 1000],
+        'gamma': [0.01, 0.03, 0.05, 0.07, 0.1, 1, 'auto'],
+        'epsilon': [0.01, 0.03, 0.05, 0.07, 0.1, 1]
+    }
+
+    grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error', verbose=2)
 
     # Fitting the SVM to the Training set
-    model.fit(X_train, y_train)
+    grid_search.fit(X_train_scaled, y_train)
 
+    best_model = grid_search.best_estimator_
+    
     # Predicting the Test set results
-    predictions_test = model.predict(X_test)
-    predictions_train = model.predict(X_train)
+    predictions_test = best_model.predict(X_test_scaled)
+    predictions_train = best_model.predict(X_train_scaled)
 
     forecast_data = get_forecasted_fuel_prices()
     print(forecast_data.head())
     x_forecast = forecast_data[features]
     years_forecast = forecast_data['year'].values
     x_forecast = sc.transform(x_forecast)
-    forecasted_prices = model.predict(x_forecast)
+    forecasted_prices = best_model.predict(x_forecast)
 
     # Print the test loss and test MAE
     test_mae = mean_absolute_error(y_test, predictions_test)
