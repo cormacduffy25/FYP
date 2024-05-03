@@ -1,1 +1,4 @@
 config.json
+model_perormance.csv
+ann_model.h5
+scaler.gz
