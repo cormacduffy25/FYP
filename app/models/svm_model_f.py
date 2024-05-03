@@ -25,7 +25,7 @@ data = load_data_from_db()
 # Dropping rows with missing values
 data_cleaned = data.dropna()
 
-fuel_types = ['oilprice', 'coalprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice']
+fuel_types = ['oilprice', 'coalprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
 all_forecasts = {}
 
 for fuel in fuel_types:
@@ -47,7 +47,7 @@ for fuel in fuel_types:
     # Define the model and grid search parameters
     model = SVR()
     param_grid = {
-        'kernel': ['rbf', 'linear'],
+        'kernel': ['rbf'],
         'C': [1, 10, 100, 1000],
         'gamma': [0.01, 0.03, 0.05, 0.07, 0.1, 1, 'auto'],
         'epsilon': [0.01, 0.03, 0.05, 0.07, 0.1, 1]
@@ -80,7 +80,7 @@ forecast_df = pd.DataFrame(all_forecasts)
 forecast_df.index.name = 'year'
 forecast_df.reset_index(inplace=True)
 
-forecast_df.to_sql('fuelsources', con=engine, if_exists='append', index=False)
+forecast_df.to_sql('fuelsources_forecasted_svm', con=engine, if_exists='replace', index=False)
 
 print("Data successfully saved to the database.")
 

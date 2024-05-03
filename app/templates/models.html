@@ -79,16 +79,30 @@ Models
 
 
 <script>
+    // This function processes datasets to replace zero values with null
+    function processChartData(datasets) {
+        return datasets.map(dataset => {
+            return {
+                ...dataset,
+                data: dataset.data.map(value => value === 0 ? null : value)
+            };
+        });
+    }
+</script>
+
+
+<script>
     function createModelChart(endpoint, chartId, titleText) {
     fetch(endpoint)
       .then(response => response.json())
       .then(data => {
+        const processedDatasets = processChartData(data.datasets);
         const ctx = document.getElementById(chartId).getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: data.labels,
-                datasets: data.datasets
+                datasets: processedDatasets
             },
             options: {
                 responsive: true,
@@ -113,7 +127,8 @@ Models
                             text: 'Year'
                         }
                     }
-                }
+                },
+                spanGaps: true
             }
         });
       })

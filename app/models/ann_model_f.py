@@ -12,6 +12,7 @@ from sqlalchemy import create_engine, insert, MetaData, Table
 import json
 import os
 import joblib
+import kerastuner as kt
 
 class PrintEvery50Epochs(Callback):
     def on_epoch_end(self, epoch, logs=None):
@@ -33,7 +34,6 @@ def get_db_url():
 
 db_url = get_db_url()
 engine = create_engine(db_url)
-#predictions_ann = Table('predictions_ann', MetaData(), autoload_with=engine)
 
 def load_data_from_db():
    sql_query = 'SELECT * FROM fuel_sources_lagged'
@@ -92,7 +92,7 @@ def train_ann_model():
     model = Sequential([
         Dense(128, activation='relu', input_shape=(x_train.shape[1],)),
         Dense(64, activation='relu'),
-        Dense(y_train.shape[1], activation='linear')
+        Dense(y_train.shape[1], activation='relu')
     ])
 
     model.compile(optimizer= tf.keras.optimizers.RMSprop(learning_rate=0.001,rho=0.9), loss='mean_squared_error', metrics=['mae'])

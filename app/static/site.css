@@ -97,3 +97,38 @@ button:hover {
     border-radius: 4px;
     color: #333;
 }
+
+.contact-info {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f2f2f2;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.contact-list {
+    list-style: none;
+    padding: 0;
+}
+
+.contact-list li {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.contact-list i {
+    margin-right: 8px;
+    color: #4CAF50; /* Adjust the color to match your site's theme */
+}
+
+.contact-list a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.contact-list a:hover {
+    color: #4CAF50;
+}

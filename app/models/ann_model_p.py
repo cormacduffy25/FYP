@@ -30,21 +30,28 @@ def load_data_from_db():
    return pd.read_sql_query(sql_query, engine)
 
 def save_predictions_to_db(actuals, predictions, years, actuals_train, predictions_train, years_train):
-    df = pd.DataFrame({
+    test_df = pd.DataFrame({
+        'type': 'test',
         'actual': actuals, 
         'prediction': predictions, 
         'year': years,
+    })
+    train_df = pd.DataFrame({
+        'type': 'train',
         'actual': actuals_train,
         'prediction': predictions_train,
         'year': years_train})    
-    df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
-
+    
+    combined_df = pd.concat([test_df, train_df])
+    combined_df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
+    print("Data saved to database successfully.")
+    
 def train_ann_model():
     """
     Trains an Artificial Neural Network (ANN) model using the given dataset.
     """
 
-    # Loading the Data
+    # Loading the Data 
     train_data = load_data_from_db()
 
     print(train_data.head())
@@ -54,7 +61,7 @@ def train_ann_model():
     y = train_data['avgprice']  # Your target variable
 
     # Splitting the dataset into the Training set and Test set
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 32)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0, shuffle=True)
 
     # Extracting the years from the dataset
     years_test = X_test['year'].values
