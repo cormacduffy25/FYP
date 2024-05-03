@@ -15,16 +15,16 @@ Models
 </div>
 <div class="calculator">
     <div class="input-group">
-        <label for="kWh">Enter the number of kWh:</label>
-        <input type="number" id="kWh" placeholder="Enter the number of kWh" min="0">
+        <label for="kWh">Enter the your yearly average household kWh:</label>
+        <input type="number" id="kWh" placeholder="kWh" min="0">
     </div>
     <div class="input-group">
         <label for="yearSelect">Select Year:</label>
         <select id="yearSelect">
             <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
+            <option value="2023">2023 (Forecasted Data)</option>
+            <option value="2024">2024 (Forecasted Data)</option>
+            <option value="2025">2025 (Forecasted Data)</option>
         </select>
     </div>
     <div class="input-group">
@@ -64,7 +64,7 @@ Models
             .then(data => {
                 // Make sure your API is returning a cost value in the response
                 if (data && data.cost !== undefined) {
-                    document.getElementById('output').innerText = `Total cost: ${data.cost.toFixed(2)} GBP`;
+                    document.getElementById('output').innerText = `Estimated Yearly Cost: ${data.cost.toFixed(2)} GBP`;
                 } else {
                     // Handle cases where the cost might not be returned in the response
                     document.getElementById('output').innerText = 'No cost data was returned from the API.';
