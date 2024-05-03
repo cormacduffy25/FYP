@@ -8,23 +8,42 @@ import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
 import json
 
+# Function to load database configuration and connect to the engine
 def get_db_url():
+    """Loads database configuration from a JSON file and returns the database URL."""
     with open('config.json') as config_file:
         config = json.load(config_file)
     return config['db_url']
 
+# Get the database URL
 db_url = get_db_url()
+# Create an engine to connect to the database
 engine = create_engine(db_url)
 
 def load_data_from_db():
-   sql_query = 'SELECT * FROM fuelsources'
-   return pd.read_sql_query(sql_query, engine)
+    """Loads data from the database table 'fuelsources'."""
+    sql_query = 'SELECT * FROM fuelsources'
+    return pd.read_sql_query(sql_query, engine)
 
 def get_forecasted_fuel_prices():
+    """Loads forecasted fuel prices from the database table 'fuelsources_forecasted_svm'."""
     sql_query = 'SELECT * FROM fuelsources_forecasted_svm'
     return pd.read_sql_query(sql_query, engine)
 
 def save_predictions_to_db(actuals_test, predictions_test, years_test, actuals_train, predictions_train, years_train, forecasted_prices, forecasted_years):
+    """
+    Saves predictions, actuals, and forecasted prices to the database.
+
+    Args:
+        actuals_test (array-like): Actual values for the test set.
+        predictions_test (array-like): Predicted values for the test set.
+        years_test (array-like): Years corresponding to the test set.
+        actuals_train (array-like): Actual values for the train set.
+        predictions_train (array-like): Predicted values for the train set.
+        years_train (array-like): Years corresponding to the train set.
+        forecasted_prices (array-like): Forecasted prices for future years.
+        forecasted_years (array-like): Years corresponding to the forecasted prices.
+    """
     # Creating separate DataFrames for test, train, and forecast data
     test_df = pd.DataFrame({
         'type': 'test',
@@ -55,24 +74,38 @@ def save_predictions_to_db(actuals_test, predictions_test, years_test, actuals_t
     print("Data saved to database successfully.")
 
 def plot_predictions(predictions, actuals, title):
-# Plotting
+    """
+    Plots actual vs predicted values.
+
+    Args:
+        predictions (array-like): Predicted values.
+        actuals (array-like): Actual values.
+        title (str): Title of the plot.
+    """
+    # Plotting
     plt.figure(figsize=(12, 6))
-# Sort the actual and predicted values for plotting
+    # Sort the actual and predicted values for plotting
     indices = np.argsort(actuals)
     sorted_actual = actuals.iloc[indices].values
     sorted_predictions = predictions[indices]
-# Plotting the Actual vs Predicted Values
+    # Plotting the Actual vs Predicted Values
     plt.plot(sorted_actual, label='Actual Values', color='blue', marker='o')
     plt.plot(sorted_predictions, label='Predicted Values', color='red', linestyle='--', marker='x')
-    plt.title(f'Actual vs Predicted Values SVM Model({title})')
+    plt.title(f'Actual vs Predicted Values SVM Model ({title})')
     plt.xlabel('Index')
     plt.ylabel('Values')
     plt.legend()
     plt.show()
 
 def train_svm_model():
+    """
+    Trains a Support Vector Machine (SVM) model for predicting fuel prices.
 
-     # Loading the Data
+    The function loads data from the database, preprocesses it, trains an SVM model
+    using GridSearchCV for hyperparameter tuning, evaluates the model, and saves 
+    predictions, actuals, and forecasted prices to the database.
+    """
+    # Loading the Data
     train_data = load_data_from_db()
     print(train_data.head())
 

@@ -10,42 +10,48 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sqlalchemy import create_engine, insert, MetaData, Table
 import json
+import keras_tuner as kt
 
+# Callback to print training progress every 50 epochs
 class PrintEvery50Epochs(Callback):
     def on_epoch_end(self, epoch, logs=None):
         if (epoch + 1) % 50 == 0 or epoch == 0:
-           print(f"Epoch {epoch + 1}: loss - {logs['loss']:.4f}, mae - {logs['mae']:.4f}, val_loss - {logs['val_loss']:.4f}, val_mae - {logs['val_mae']:.4f}")
+            print(f"Epoch {epoch + 1}: loss - {logs['loss']:.4f}, mae - {logs['mae']:.4f}, val_loss - {logs['val_loss']:.4f}, val_mae - {logs['val_mae']:.4f}")
 
+# Function to retrieve database URL from config file
 def get_db_url():
     with open('config.json') as config_file:
         config = json.load(config_file)
     return config['db_url']
 
+# Creating a database engine
 db_url = get_db_url()
 engine = create_engine(db_url)
-predictions_ann = Table('predictions_ann', MetaData(), autoload_with=engine)
 
+# Function to load data from the database
 def load_data_from_db():
-   sql_query = 'SELECT * FROM fuelsources'
-   return pd.read_sql_query(sql_query, engine)
+    sql_query = 'SELECT * FROM fuelsources'
+    return pd.read_sql_query(sql_query, engine)
 
+# Function to save predictions to the database
 def save_predictions_to_db(actuals, predictions, years, actuals_train, predictions_train, years_train):
     test_df = pd.DataFrame({
         'type': 'test',
-        'actual': actuals, 
-        'prediction': predictions, 
+        'actual': actuals,
+        'prediction': predictions,
         'year': years,
     })
     train_df = pd.DataFrame({
         'type': 'train',
         'actual': actuals_train,
         'prediction': predictions_train,
-        'year': years_train})    
-    
+        'year': years_train})
+
     combined_df = pd.concat([test_df, train_df])
     combined_df.to_sql('predictions_ann', con=engine, if_exists='replace', index=False)
     print("Data saved to database successfully.")
 
+# Function to plot actual vs predicted values
 def plot_act_vs_predicted(predicted, actual, title):
     plt.figure(figsize=(12, 6))
     plt.plot(predicted, label='Predictions', color='red', linestyle='--', marker='x')
@@ -53,6 +59,7 @@ def plot_act_vs_predicted(predicted, actual, title):
     plt.title(f'Predictions vs Actual Values ANN Model ({title})')
     plt.legend()
     plt.show()
+    
     
 def train_ann_model():
     """
@@ -98,7 +105,7 @@ def train_ann_model():
     # Fitting the ANN to the Training set
     history = model.fit(x_train_scaled, y_train, validation_split=0.2, epochs=500, batch_size=128, callbacks=[PrintEvery50Epochs()], verbose=0)
     # Evaluating the ANN
-    model.evaluate(x_train_scaled, y_test)
+    model.evaluate(x_test_scaled, y_test)
     # Predicting the Test set results
     predictions_test = model.predict(x_test_scaled)
     preditctions_train = model.predict(x_train_scaled)
@@ -112,31 +119,8 @@ def train_ann_model():
     # Save the predictions to the database
     save_predictions_to_db(actual_values_test, predictions_test, years_test, actual_values_train, preditctions_train, years_train)
 
-    """
-    print(f"Number of predictions: {len(predictions_test)}")
-    print(f"Number of actual values: {len(actual_values_test)}")
-    print(f"Number of years: {len(years_test)}")
-    print(f"Number of predictions: {len(preditctions_train)}")
-    print(f"Number of actual values: {len(actual_values_train)}")
-    print(f"Number of years: {len(years_train)}")
-    """
-
     epochs = history.epoch
     indices = [i for i in epochs if i % 50 == 0 or i == epochs[0]]
-
-    # Print the test predictions and actual values
-    print("Prediction vs Actual")
-    for i in range(len(predictions_test)):
-        print(f"Prediction: {predictions_test[i]:.4f}, Actual: {actual_values_test[i]:.4f}")
-    # Print the train predictions and actual values
-    print("Prediction vs Actual")
-    for i in range(len(preditctions_train)):
-        print(f"Prediction: {preditctions_train[i]:.4f}, Actual: {actual_values_train[i]:.4f}")
-
-    # Print the test loss and test MAE
-    test_loss, test_mae = model.evaluate(x_test, y_test)
-    print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
-
 
         # Plot training & validation loss values every 50 epochs
     plt.figure(figsize=(12, 6))
@@ -163,4 +147,17 @@ def train_ann_model():
 
     plot_act_vs_predicted(predictions_test, actual_values_test, "Test Data")
     plot_act_vs_predicted(preditctions_train, actual_values_train, "Train Data")
+
+       # Print the test predictions and actual values
+    print("Prediction vs Actual")
+    for i in range(len(predictions_test)):
+        print(f"Prediction: {predictions_test[i]:.4f}, Actual: {actual_values_test[i]:.4f}")
+    # Print the train predictions and actual values
+    print("Prediction vs Actual")
+    for i in range(len(preditctions_train)):
+        print(f"Prediction: {preditctions_train[i]:.4f}, Actual: {actual_values_train[i]:.4f}")
+
+     # Print the test loss and test MAE
+    test_loss, test_mae = model.evaluate(x_test_scaled, y_test)
+    print(f"Test Loss: {test_loss}, Test MAE: {test_mae}")
 train_ann_model()

@@ -9,18 +9,31 @@ import json
 
 # Function to load database configuration and connect to the engine
 def get_db_url():
+    """Loads database configuration from a JSON file and returns the database URL."""
     with open('config.json') as config_file:
         config = json.load(config_file)
     return config['db_url']
 
+# Get the database URL
 db_url = get_db_url()
+# Create an engine to connect to the database
 engine = create_engine(db_url)
 
 def load_data_from_db():
+    """Loads data from the database table 'fuel_sources_lagged'."""
     sql_query = 'SELECT * FROM fuel_sources_lagged'
     return pd.read_sql_query(sql_query, engine)
 
 def save_forecasts_to_database(forecasts, engine, table_name, years):
+    """
+    Saves the forecasts to the specified database table.
+
+    Args:
+        forecasts (dict): A dictionary containing forecasts for different fuel types.
+        engine: SQLAlchemy engine object for database connection.
+        table_name (str): Name of the table to which the forecasts will be saved.
+        years (list): List of years for which the forecasts are made.
+    """
     # Convert the forecasts dictionary to a DataFrame
     forecast_df = pd.DataFrame(forecasts)
     forecast_df.index = years
@@ -32,11 +45,18 @@ def save_forecasts_to_database(forecasts, engine, table_name, years):
     print("Data successfully saved to the database.")
 
 def train_svm_model():
-# Load and clean the dataset
+    """
+    Trains Support Vector Machine (SVM) models for forecasting fuel prices.
+
+    The function loads data from the database, preprocesses it, trains SVM models
+    for different fuel types using GridSearchCV for hyperparameter tuning, evaluates
+    the models, and saves the forecasts to the database.
+    """
+    # Load and clean the dataset
     data = load_data_from_db()
     data.dropna(inplace=True)
 
-    fuel_types = ['oilprice', 'coalprice', 'gasprice', 'nuclearprice', 'hydroprice', 'windsolarprice', 'cokebreezeprice']
+    fuel_types = ['oilprice', 'coalprice', 'gasprice', 'nuclearprice', 'hydroprice', 'cokebreezeprice','windsolarprice']
     all_forecasts = {}
 
     for fuel in fuel_types:
@@ -46,7 +66,7 @@ def train_svm_model():
     
         data_model = data.dropna()
 
-    # Define features and target
+        # Define features and target
         features = [f'{fuel}_lag{lag}' for lag in [1, 2, 3]]
         x = data_model[features]
         y = data_model[fuel]
@@ -56,7 +76,7 @@ def train_svm_model():
         x_scaled = scaler.fit_transform(x)
         x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.2, random_state=42)
 
-    # Define the model and grid search parameters
+        # Define the model and grid search parameters
         model = SVR()
         param_grid = {
             'kernel': ['rbf'],
@@ -65,11 +85,11 @@ def train_svm_model():
             'epsilon': [0.01, 0.03, 0.05, 0.07, 0.1, 1]
         }
 
-    # Setup the GridSearchCV
+        # Setup the GridSearchCV
         grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error', verbose=2)
         grid_search.fit(x_train, y_train)
 
-    # Use the best estimator to make predictions
+        # Use the best estimator to make predictions
         best_model = grid_search.best_estimator_
         y_pred = best_model.predict(x_test)
         test_mae = mean_absolute_error(y_test, y_pred)
@@ -80,7 +100,7 @@ def train_svm_model():
         print(f"Test MAE for {fuel}: {test_mae}")
         print(f"Test MSE for {fuel}: {test_mse}")
 
-    # Forecasting future values using recursive predictions
+        # Forecasting future values using recursive predictions
         latest_features = data.iloc[-1][features].values.reshape(1, -1)
         latest_scaled = scaler.transform(latest_features)
         predictions = {}
@@ -93,5 +113,10 @@ def train_svm_model():
             current_features = scaler.transform(np.array([[forecast] + list(current_features[0, :-1])]))
 
         all_forecasts[fuel] = predictions
+    
+    # Save forecasts to the database
     save_forecasts_to_database(all_forecasts, engine, 'fuelsources_forecasted_svm', years_to_predict)
     print(all_forecasts)
+
+# Execute the training of SVM models and forecasting
+train_svm_model()
